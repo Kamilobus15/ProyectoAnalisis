@@ -250,7 +250,7 @@ class NumberLinkGame:
 
     def movimientoValido(self, x, y, numero, visitados=None, caminos=None):
         # Verifica si la posición está dentro de los límites del tablero.
-        if not (0 <= x < self.size and 0 <= y < self.size):
+        if not (0 <= x <= self.size and 0 <= y <= self.size):
             return False
         # Verifica si la celda está ocupada por un número diferente.
         if self.board[x][y] not in (0, numero):
@@ -265,7 +265,7 @@ class NumberLinkGame:
 
     
     def hacerMovimiento(self, x,y, numero):
-        self.board[x][y] = numero
+        self.board[x][y] = "#"
         self.caminos.add((x,y))
 
     def deshacerMovimiento(self, x,y, numero):
@@ -312,25 +312,46 @@ class NumberLinkGame:
     
     ### mal
     def resolver_numero(self, inicio, numero, visitados=None):
-
+        
+        print("ENTRAMOS" )
+        print(inicio)
+        self.caminos = visitados
         if visitados is None:
             visitados = set()
         if self.esNumeroConectado(numero):
+            print("Diego")
             return True
-        
+        validar = False
         x,y = inicio
         visitados.add((x,y))
         print(f"Iniciando desde {inicio}, visitados: {visitados}") 
-        for dx, dy in [(0,1),(0,-1),(1,0),(-1,0)]:
-            nx, ny = x+dx, y+dy
-            if (nx, ny) not in visitados and self.movimientoValido(nx, ny, numero):
-                self.hacerMovimiento(nx, ny, numero)
-                print(f"Movimiento realizado a {(nx, ny)}, tablero: {self.board}")
-                if self.resolver_numero((nx,ny), numero, visitados):
+        for dx, dy in [(x,(y+1)),((x+1),y),(x, (y-1)),((x-1),y)]:
+            
+            print("entrada")
+            
+            print(validar)
+            if (dx, dy) not in visitados and self.movimientoValido(dx, dy, numero):
+                [print(" ".join(map(str, fila))) for fila in self.board]
+                print(dx, dy)
+                print("hola1111")
+                if self.board[dx][dy] == numero :
+                    visitados.add((dx,dy))
+                    print("ganaaaaaaaaaaaaaaaaaaaaaaaaaaamos" )
+                    print(self.caminos)
+                    validar = True
                     return True
-                self.deshacerMovimiento(nx, ny, numero)
-                print(f"Movimiento deshecho de {(nx, ny)}, tablero: {self.board}")
-                visitados.remove((nx,ny))
+                    
+                elif (validar == False):
+                    self.hacerMovimiento(dx, dy, numero)
+                    print(f"Movimiento realizado a {(dx, dy)}, tablero: {self.board}")
+                    print(validar)
+                    self.resolver_numero( (dx,dy), numero, visitados)
+                    
+                else:
+                    self.deshacerMovimiento(dx, dy, numero)
+                    print(f"Movimiento deshecho de {(dx, dy)}, tablero: {self.board}")
+                    visitados.remove((dx,dy))
+                    
         print(f"No se encontró solución desde {inicio}, visitados: {visitados}")
         return False
 
@@ -412,7 +433,8 @@ class TestNumberLinkGame(unittest.TestCase):
         # Verifica que el tablero se resuelve correctamente
 
     def test_resolver_numero(self):
-        self.game.board = [[1, 0], [0, 1]]
+        self.game.board = [[1, 0, 0], [0, 1, 0] , [0, 0, 0]]
+        #self.game.board = [[1, 0], [0, 1]]
         # Configura un tablero con un solo número para resolver
         self.assertTrue(self.game.resolver_numero((0, 0), 1, set()))
         # Verifica que el número se resuelve correctamente
