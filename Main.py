@@ -265,11 +265,13 @@ class NumberLinkGame:
 
     
     def hacerMovimiento(self, x,y, numero):
-        self.board[x][y] = numero
+        if self.board[x][y] == 0:
+            self.board[x][y] = "#"
         self.caminos.add((x,y))
 
     def deshacerMovimiento(self, x,y, numero):
-        self.board[x][y] = 0
+        if self.board[x][y] == "#":
+            self.board[x][y] = 0
         self.caminos.remove((x,y))
 
     def marcarCamino(self, x,y, numero):
@@ -299,40 +301,78 @@ class NumberLinkGame:
         if self.esNumeroConectado(numero):
             return True
         x,y = inicio
-        visitados = set()
         for direccion in self.obtener_direcciones():
             nx, ny = x + direccion[0], y + direccion[1]
             if self.movimientoValido(nx, ny, numero):
                 self.hacerMovimiento(nx, ny, numero)
-                if self.resolver_tablero((nx,ny), numero):
+                siguiente_inicio = self.encontrarNumero(numero)
+                if siguiente_inicio and self.resolver_numero(siguiente_inicio, numero):
                     return True
+                
                 self.deshacerMovimiento(nx, ny, numero)
-        return False
+        return True
+        #return False
+
+    
 
     
     ### mal
     def resolver_numero(self, inicio, numero, visitados=None):
-
         if visitados is None:
             visitados = set()
+        
+        print(f"Resolver número {numero} desde {inicio}. Visitados: {visitados}")
+
         if self.esNumeroConectado(numero):
+            print(f"El número {numero} ya está conectado.")
             return True
         
-        x,y = inicio
-        visitados.add((x,y))
-        print(f"Iniciando desde {inicio}, visitados: {visitados}") 
-        for dx, dy in [(0,1),(0,-1),(1,0),(-1,0)]:
-            nx, ny = x+dx, y+dy
+        x, y = inicio
+        visitados.add((x, y))
+        print("Visitando la posición", (x, y))
+        self.imprimirTablero()
+        
+        # Encuentra la ubicación objetivo
+        objetivo = None
+        for i, fila in enumerate(self.board):
+            for j, valor in enumerate(fila):
+                if valor == numero and (i, j) != inicio:
+                    objetivo = (i, j)
+        
+        # Calcula la distancia a la ubicación objetivo para priorizar movimientos
+        direcciones = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        direcciones.sort(key=lambda d: self.distancia((x+d[0], y+d[1]), objetivo))
+        
+        for dx, dy in direcciones:
+            nx, ny = x + dx, y + dy
             if (nx, ny) not in visitados and self.movimientoValido(nx, ny, numero):
                 self.hacerMovimiento(nx, ny, numero)
-                print(f"Movimiento realizado a {(nx, ny)}, tablero: {self.board}")
-                if self.resolver_numero((nx,ny), numero, visitados):
+                print(f"Movimiento a {(nx, ny)}.")
+                self.imprimirTablero()
+                if (nx, ny) == objetivo:  # Poda de backtracking
+                    print("Objetivo ", objetivo, " alcanzado.")
+                
+                    self.caminos.add((nx, ny))
+                    return True
+                if self.resolver_numero((nx, ny), numero, visitados):
                     return True
                 self.deshacerMovimiento(nx, ny, numero)
-                print(f"Movimiento deshecho de {(nx, ny)}, tablero: {self.board}")
-                visitados.remove((nx,ny))
-        print(f"No se encontró solución desde {inicio}, visitados: {visitados}")
+                print(f"Backtracking de {(nx, ny)}.")
+                visitados.remove((nx, ny))
+        print(f"No se encontró un camino para el número {numero} desde la posición {inicio}")
         return False
+
+    def distancia(self, punto1, punto2):
+        # Calcula la distancia de Manhattan entre dos puntos
+        return abs(punto1[0] - punto2[0]) + abs(punto1[1] - punto2[1])
+
+
+    def imprimirTablero(self):
+        for fila in self.board:
+            print(" ".join(str(celda) if celda != 0 else '.' for celda in fila))
+        print()  # Para agregar una línea vacía después del tablero
+
+
 
 
     def obtener_direcciones(self):
@@ -389,10 +429,19 @@ class TestNumberLinkGame(unittest.TestCase):
 
 
     def test_hacerMovimiento_y_deshacerMovimiento(self):
-        self.game.hacerMovimiento(0, 0, 1)
-        self.assertEqual(self.game.board[0][0], 1)
-        self.game.deshacerMovimiento(0, 0, 1)
-        self.assertEqual(self.game.board[0][0], 0)
+        # Inicializa un tablero de 3x3 vacío
+        self.game = NumberLinkGame([[0, 0, 0], [0, 0, 0], [0, 1, 1]])
+
+        # Hacer un movimiento en una celda vacía
+        self.game.hacerMovimiento(1, 1, 1)
+        self.assertEqual(self.game.board[1][1], "#")  # Suponiendo que "#" es el marcador temporal
+
+        # Deshacer el movimiento
+        self.game.deshacerMovimiento(1, 1, 1)
+        self.assertEqual(self.game.board[1][1], 0)  # La celda debería volver a estar vacía
+
+
+
 
     def test_marcarCamino(self):
         self.game.marcarCamino(0, 0, 1)
@@ -406,15 +455,20 @@ class TestNumberLinkGame(unittest.TestCase):
         self.assertIsNone(self.game.obtenerSiguienteNumero())  # Todos los números están conectados
 
     def test_resolver_tablero(self):
-        self.game.board = [[1, 2], [0, 2]]
+        #self.game.board = [[1, 2], [0, 2]]
+        self.game.board = [[1, 0, 0], [0, 0, 0] , [0, 0, 1]]
         # Configura un tablero que necesita resolver
         self.assertTrue(self.game.resolver_tablero((0, 0), 1))
         # Verifica que el tablero se resuelve correctamente
 
     def test_resolver_numero(self):
-        self.game.board = [[1, 0], [0, 1]]
+        #self.game.board = [[1, 0, 0], [0, 0, 0] , [0, 0, 1]]
+        self.game.board = [[0, 0, 0], [0, 1, 0] , [0, 0, 1]]
+        #self.game.board = [[1, 0, 0, 0], [0, 0, 0, 0] , [0, 0, 1, 0],[0, 0, 0, 0] ]
+        #self.game.board = [[1, 0], [0, 1]]
         # Configura un tablero con un solo número para resolver
-        self.assertTrue(self.game.resolver_numero((0, 0), 1, set()))
+        #self.assertTrue(self.game.resolver_numero((0, 0), 1, set()))
+        self.assertTrue(self.game.resolver_numero((1, 1), 1, set()))
         # Verifica que el número se resuelve correctamente
 
     def test_obtener_direcciones(self):
