@@ -295,8 +295,18 @@ class NumberLinkGame:
     #### heuristicas ####
 
     ### mal
-    def resolver_tablero(self,inicio, numero):
-        if self.esNumeroConectado(numero):
+    def resolver_tablero(self):
+        
+        #lista de tuplas x y [1(x,y).3(x,y),4(x,y)] 
+        
+        #lista de numeros a conectar [1,3,4]
+
+        #siclo que me llame la función resolver numero para cada una de estas 
+        # resolver_numero(self, 1(x,y), 1, visitados=None)
+
+        #lo que saca la función es la matriz modificada y el valor de self.caminos con los espacios invalidos 
+        
+        """if self.esNumeroConectado(numero):
             return True
         x,y = inicio
         visitados = set()
@@ -307,59 +317,52 @@ class NumberLinkGame:
                 if self.resolver_tablero((nx,ny), numero):
                     return True
                 self.deshacerMovimiento(nx, ny, numero)
-        return False
+        return False"""
 
     
     ### mal
     def resolver_numero(self, inicio, numero, visitados=None):
         validar = False
         
-        print("ENTRAMOS" )
-        print(inicio)
+        
         self.caminos = visitados
         if visitados is None:
             visitados = set()
         if self.esNumeroConectado(numero):
-            print("Diego")
             return 
-        
+
         else:
-            print("camilo")
             x,y = inicio
             visitados.add((x,y))
             print(f"Iniciando desde {inicio}, visitados: {visitados}") 
-            contador = 0
+            
+            for dx, dy in [(x,(y+1)),((x+1),y),(x, (y-1)),((x-1),y)]:
+                if (dx, dy) not in visitados and self.movimientoValido(dx, dy, numero):
+                    if self.board[dx][dy] == numero :
+                            visitados.add((dx,dy))
+                            print(self.caminos)
+                            validar = True
+                            return
             for dx, dy in [(x,(y+1)),((x+1),y),(x, (y-1)),((x-1),y)]:
             
-                print("entrada" )
-                print(contador)
-                contador =+ 1
-                print(dx, dx)
-                print(validar)
-                print(x, y)
+            
                 if (dx, dy) not in visitados and self.movimientoValido(dx, dy, numero):
                     [print(" ".join(map(str, fila))) for fila in self.board]
-                    print(dx, dy)
-                    print("hola1111")
                     if self.board[dx][dy] == numero :
                         visitados.add((dx,dy))
-                        print("ganaaaaaaaaaaaaaaaaaaaaaaaaaaamos" )
-                        print(self.caminos)
                         validar = True
                         return
                         
                     elif (validar == False and (self.esNumeroConectado(numero) == False)):
                         self.hacerMovimiento(dx, dy, numero)
                         print(f"Movimiento realizado a {(dx, dy)}, tablero: {self.board}")
-                        print(validar)
-                        print("segunda condición ")
                         self.resolver_numero( (dx,dy), numero, visitados)
                         
                     else:
                         self.deshacerMovimiento(dx, dy, numero)
                         print(f"Movimiento deshecho de {(dx, dy)}, tablero: {self.board}")
                         visitados.remove((dx,dy))
-                        print("tercera")
+
                     
         print(f"No se encontró solución desde {inicio}, visitados: {visitados}")
         return False
@@ -436,13 +439,13 @@ class TestNumberLinkGame(unittest.TestCase):
         self.assertIsNone(self.game.obtenerSiguienteNumero())  # Todos los números están conectados
 
     def test_resolver_tablero(self):
-        self.game.board = [[1, 2], [0, 2]]
+        self.game.board = [[1, 0, 0], [0, 1, 0] , [0, 0, 0]]
         # Configura un tablero que necesita resolver
         self.assertTrue(self.game.resolver_tablero((0, 0), 1))
         # Verifica que el tablero se resuelve correctamente
 
     def test_resolver_numero(self):
-        self.game.board = [[1, 0, 0], [1, 0, 0] , [0, 0, 0]]
+        self.game.board = [[1, 0, 0 ,0], [0, 0, 0, 0] , [0, 0, 0, 0], [0, 0, 0, 1]]
         #self.game.board = [[1, 0], [0, 1]]
         # Configura un tablero con un solo número para resolver
         self.assertTrue(self.game.resolver_numero((0, 0), 1, set()))
