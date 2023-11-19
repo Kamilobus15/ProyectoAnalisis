@@ -310,8 +310,8 @@ class NumberLinkGame:
                     return True
                 
                 self.deshacerMovimiento(nx, ny, numero)
-        return True
-        #return False
+        #return True
+        return False
 
     
 
