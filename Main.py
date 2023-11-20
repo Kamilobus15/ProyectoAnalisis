@@ -250,7 +250,7 @@ class NumberLinkGame:
 
     def movimientoValido(self, x, y, numero, visitados=None, caminos=None):
         # Verifica si la posición está dentro de los límites del tablero.
-        if not (0 <= x <= self.size and 0 <= y <= self.size):
+        if not (0 <= x < len(self.board) and 0 <= y < len(self.board)):
             return False
         # Verifica si la celda está ocupada por un número diferente.
         if self.board[x][y] not in (0, numero):
@@ -463,7 +463,7 @@ class TestNumberLinkGame(unittest.TestCase):
         self.assertIsNone(self.game.obtenerSiguienteNumero())  # Todos los números están conectados
 
     def test_resolver_tablero(self):
-        self.game.board = [[1, 0, 0], [0, 1, 0] , [0, 0, 0]]
+        self.game.board = [[1, 0, 0], [2, 0, 0] , [0, 2, 1]]
         # Configura un tablero que necesita resolver
         self.assertTrue(self.game.resolver_tablero((0, 0), 1))
         # Verifica que el tablero se resuelve correctamente
