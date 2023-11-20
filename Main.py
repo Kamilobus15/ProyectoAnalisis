@@ -250,7 +250,7 @@ class NumberLinkGame:
 
     def movimientoValido(self, x, y, numero, visitados=None, caminos=None):
         # Verifica si la posición está dentro de los límites del tablero.
-        if not (0 <= x <= self.size and 0 <= y <= self.size):
+        if not (0 <= x < len(self.board) and 0 <= y < len(self.board)):
             return False
         # Verifica si la celda está ocupada por un número diferente.
         if self.board[x][y] not in (0, numero):
@@ -296,11 +296,34 @@ class NumberLinkGame:
 
     ### mal
     def resolver_tablero(self):
-        
+        lista = []
+        lista_tuplas = []
         #lista de tuplas x y [1(x,y).3(x,y),4(x,y)] 
-        
         #lista de numeros a conectar [1,3,4]
+        filas = len(self.board)
+        columnas = len(self.board[0]) if filas > 0 else 0
+        for i in range(filas):
+            for j in range(columnas):
+                if self.board[i][j] != 0:
+                    elemento = self.board[i][j]
+                    if elemento in  lista: 
+                        pass
+                    else:
+                        lista.append(elemento)
+                        lista_tuplas.append((i,j))
 
+        
+        print(lista)
+        print(lista_tuplas)
+
+        [print(" ".join(map(str, fila))) for fila in self.board]
+
+        for i , j in zip(lista, lista_tuplas):
+            self.resolver_numero(j, i,set())
+            
+        [print(" ".join(map(str, fila))) for fila in self.board]
+        return True
+        
         #siclo que me llame la función resolver numero para cada una de estas 
         # resolver_numero(self, 1(x,y), 1, visitados=None)
 
@@ -331,6 +354,7 @@ class NumberLinkGame:
         if self.esNumeroConectado(numero):
             return 
 
+        
         else:
             x,y = inicio
             visitados.add((x,y))
@@ -363,7 +387,7 @@ class NumberLinkGame:
                         print(f"Movimiento deshecho de {(dx, dy)}, tablero: {self.board}")
                         visitados.remove((dx,dy))
 
-                    
+        print(len(self.board))            
         print(f"No se encontró solución desde {inicio}, visitados: {visitados}")
         return False
 
@@ -439,9 +463,9 @@ class TestNumberLinkGame(unittest.TestCase):
         self.assertIsNone(self.game.obtenerSiguienteNumero())  # Todos los números están conectados
 
     def test_resolver_tablero(self):
-        self.game.board = [[1, 0, 0], [0, 1, 0] , [0, 0, 0]]
+        self.game.board = [[1, 0, 0], [2, 0, 0] , [0, 2, 1]]
         # Configura un tablero que necesita resolver
-        self.assertTrue(self.game.resolver_tablero((0, 0), 1))
+        self.assertTrue(self.game.resolver_tablero())
         # Verifica que el tablero se resuelve correctamente
 
     def test_resolver_numero(self):
