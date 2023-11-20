@@ -461,7 +461,7 @@ class TestNumberLinkGame(unittest.TestCase):
         self.assertIsNone(self.game.obtenerSiguienteNumero())  # Todos los números están conectados
 
     def test_resolver_tablero(self):
-        self.game.board = [[1, 0, 0 ,0,0], [2, 0, 2, 0,0] , [0, 1, 0, 0,0], [0, 0, 0, 0, 0],[0, 0, 0, 0, 0]]
+        self.game.board = [[1, 0, 0 ,0,0], [5, 0, 5, 0,0] , [0, 1, 0, 0,0], [0, 0, 0, 0, 0],[0, 0, 0, 0, 0]]
         # Configura un tablero que necesita resolver
         self.assertTrue(self.game.resolver_tablero())#toca cambiar esto
         # Verifica que el tablero se resuelve correctamente
