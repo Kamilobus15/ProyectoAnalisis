@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import unittest
 
+
 # Clase principal del juego
 class NumberLinkGame:
     # Constructor: inicializa el juego con el tablero proporcionado
@@ -295,8 +296,12 @@ class NumberLinkGame:
     #### heuristicas ####
 
     ### mal
+    instacia_tablero = [[]]
+    #tupla de visitados        
+    l_tupla = set()
+    
     def resolver_tablero(self):
-        """""" 
+        
           
         cortos = self.priorizar_cortos()
         lista2 = []
@@ -312,10 +317,19 @@ class NumberLinkGame:
             print("ENTRA")
             
             print(i,j)
-            self.resolver_numero(j, i,set())
-            print(type(self.caminos))
-            print(type(lista_tuplas3))
+            #función que guarde la instancia del tablero 
+            
+            global instacia_tablero 
+            global l_tupla
+            instacia_tablero = [[]]
+            
+            
+            l_tupla = set()
+            instacia_tablero = self.board
+            self.resolver_numero(j, i,set(), self.board)
+            
             lista_tuplas3 = self.caminos | lista_tuplas3
+            l_tupla = lista_tuplas3
 
         self.caminos= lista_tuplas3    
             
@@ -336,53 +350,67 @@ class NumberLinkGame:
         #lo que saca la función es la matriz modificada y el valor de self.caminos con los espacios invalidos 
     
     ### mal
-    def resolver_numero(self, inicio, numero, visitados=None):
+    def resolver_numero(self, inicio, numero, visitados, boards):
         validar = False
-        
-        
+        print("entramos en esta función")
+        #se entra a camino solo cuando se conecta , esto me gusta 
         self.caminos = visitados
         if visitados is None:
             visitados = set()
         if self.esNumeroConectado(numero):
+            print("----------------hola---------------")
             return True
 
         
         else:
+            validar1 = False
             x,y = inicio
             visitados.add((x,y))
-            print(f"Iniciando desde {inicio}, visitados: {visitados}") 
+            print(f"Iniciando desde {inicio}") 
+
+
+            #estos dos son los for que hacen el movimento desde el punto inicio 
             
+            #for que ve que no lo tenga de vecino  este for actua hasta llegar a la solución o un punto encerrado
             for dx, dy in [(x,(y+1)),((x+1),y),(x, (y-1)),((x-1),y)]:
                 if (dx, dy) not in visitados and self.movimientoValido(dx, dy, numero):
                     if self.board[dx][dy] == numero :
                             visitados.add((dx,dy))
                             print(self.caminos)
-                            validar = True
+                            validar1 = True
                             print("CONECTADO")
                             return True
-                    
-            for dx, dy in [(x,(y+1)),((x+1),y),(x, (y-1)),((x-1),y)]:
-            
-            
-                if (dx, dy) not in visitados and self.movimientoValido(dx, dy, numero):
-                    [print(" ".join(map(str, fila))) for fila in self.board]
-                    if self.board[dx][dy] == numero :
-                        visitados.add((dx,dy))
-                        validar = True
-                        print("CONECTADO")
-                        return True
-                        
-                    elif (validar == False and (self.esNumeroConectado(numero) == False)):
-                        self.hacerMovimiento(dx, dy, numero)
-                        print(f"Movimiento realizado a {(dx, dy)}, tablero: {self.board}")
-                        self.resolver_numero( (dx,dy), numero, visitados)
-                        
-                    else:
-                        #self.deshacerMovimiento(dx, dy, numero)
-                        print(f"Movimiento deshecho de {(dx, dy)}, tablero: {self.board}")
-                        #visitados.remove((dx,dy))
 
-        print(len(self.board))            
+            #for para hacer movimiento, este es complejo      
+            for dx, dy in [(x,(y+1)),((x+1),y),(x, (y-1)),((x-1),y)]:
+                if ((dx, dy) not in visitados and self.movimientoValido(dx, dy, numero) and validar1 == False):
+                    
+                    if ( (self.esNumeroConectado(numero) == False)):
+                        self.hacerMovimiento(dx, dy, numero)
+                        print(f"Movimiento realizado a {(dx, dy)}")
+                        self.resolver_numero( (dx,dy), numero, visitados, self.board)
+                        #[print(" ".join(map(str, fila))) for fila in self.board]
+                        
+                        
+                    
+                      
+                    
+
+                        
+
+            [print(" ".join(map(str, fila))) for fila in self.board]
+            print()
+            #idea para quitar camino
+            
+        """print("YYYYYYYYYYYYY")
+        print(l_tupla)
+        print(type(l_tupla))
+        print("AAAAAAAAAAAAA")
+        print(self.caminos)
+        [print(" ".join(map(str, fila))) for fila in instacia_tablero]"""
+        print("AAAAAAAAAAAAA")
+        
+        self.resolver_numero( inicio, numero, l_tupla, instacia_tablero)    
         print(f"No se encontró solución desde {inicio}, visitados: {visitados}")
         return False
 
@@ -391,18 +419,7 @@ class NumberLinkGame:
         return [(0,1),(0,-1),(1,0),(-1,0)]
     
 
-    """
-    funcion encontrar_pares
-    esta funcion sirve para saber en que coordenas se encuentra un numero
-    lo hace con un diccionario llamado "pares" que tiene como llave el numero y como valor una lista de tuplas
-    un ejemplo se tiene el siguiente tablero:
-    1 2 0
-    0 1 2
-    despues de ejecutar la funcion se obtiene el siguiente diccionario:
-    {1:[(0,0),(1,1)], 2:[(1,2),(2,1)]}
-    Esto significa que el número 1 se encuentra en las coordenadas (0, 0) y (1, 1), y el número 2 en las coordenadas (0, 1) y (1, 2).
-    Esto nos servira en otras funciones como la que determina la distancia entre dos numeros
-    """
+   
     def encontrar_pares(self):
         pares ={} 
         for i, fila in enumerate(self.board):
@@ -413,41 +430,18 @@ class NumberLinkGame:
                     else:
                         pares[numero] = [(i,j)]  # Agregar la segunda coordenada al valor existente en el diccionario
         return pares
-    """
-    funncion distancia
-    esta funcion usa algo llamado distancia de manhattan que me recomendo trasla para determinar cual es las distancia entre dos numeros
-    lo bueno de esta distancia es que no toma en cuenta las diagonales
-    esta funcion se rige por una formula matematica que es la siguiente:   abs(x1 - x2) + abs(y1 - y2)
-    esta funcion recibe dos tuplas que representan las coordenadas de dos numeros
-    esta funcion retorna un numero ya sea entero o float que representa la distancia entre los dos puntos (numeros)
-    esta funcion se usara en las funciones de ordenar los pares de numeros
-    Por ejemplo, si punto1 es (2, 3) y punto2 es (5, 1), 
-    la función calcularía la distancia como abs(2 - 5) + abs(3 - 1), que daría como resultado 3 + 2 = 5.
-    
-    """
+
     def distancia(self, punto1, punto2):
         return abs(punto1[0] - punto2[0]) + abs(punto1[1] - punto2[1])
 
-    """
-    funcion priorizar_cortos
-    esta funcion llama a la funcion encontrar_pares , le saca la distancia llamando la funcion distancia 
-    y ordena la lista de tuplas de menor a mayor
-    esta funcion retorna una el lista de tupla menor a mayor distancia que tiene el numero y como segundo valor las cordenadas 
-    esta funcion nos servira para implementar la heuristica mas simple que prioriza conectar los caminos mas cortos
-    """
+
     def priorizar_cortos(self):
         pares = self.encontrar_pares()
         pares_ordenados = [(numero, (coord1, coord2)) for numero, (coord1, coord2) in sorted(pares.items(), key=lambda par: self.distancia(par[1][0], par[1][1]))]
         #pares_ordenados = sorted(pares.items(), key=lambda par: self.distancia(par[1][0], par[1][1]))
         return pares_ordenados 
 
-    """
-    funcion priorizar_largos
-    esta funcion llama a la funcion encontrar_pares , le saca la distancia llamando la funcion distancia
-    y ordena la lista de tuplas de mayor a menor
-    esta funcion retorna una el lista de tupla ordenada de mayor a menor distancia que tiene el numero y como segundo valor las cordenadas 
-    esta funcion nos servira en caso de que intetemos usar le heuristica mas avanzada que recomendo trasla
-    """
+
     def priorizar_largos(self):
         pares = self.encontrar_pares()  # Llama a la función que encuentra los pares y los guarda en 'pares'.
         pares_ordenados = [(numero, (coord1, coord2)) for numero, (coord1, coord2) in sorted(pares.items(), key=lambda par: self.distancia(par[1][0], par[1][1]), reverse=True)]
@@ -533,7 +527,7 @@ class TestNumberLinkGame(unittest.TestCase):
 
     def test_resolver_numero(self):
         self.game.board = [[1, 0, 0 ,0,0], [0, 0, 0, 0,0] , [0, 0, 0, 0,0], [0, 0, 0, 0,0],[0, 0, 0, 0,1]]
-        self.assertTrue(self.game.resolver_numero((0, 0), 1, set()))
+        self.assertTrue(self.game.resolver_numero((0, 0), 1, set(),self.game.board))
 
     def test_obtener_direcciones(self):
         esperado = [(0, 1), (0, -1), (1, 0), (-1, 0)]
