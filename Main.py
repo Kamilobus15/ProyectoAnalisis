@@ -296,29 +296,19 @@ class NumberLinkGame:
 
     ### mal
     def resolver_tablero(self):
-        lista = []
-        lista_tuplas = []
-        
-        
-        filas = len(self.board)
-        columnas = len(self.board[0]) if filas > 0 else 0
-        for i in range(filas):
-            for j in range(columnas):
-                if self.board[i][j] != 0:
-                    elemento = self.board[i][j]
-                    if elemento in  lista: 
-                        pass
-                    else:
-                        lista.append(elemento)
-                        lista_tuplas.append((i,j))
+        """""" 
+          
+        cortos = self.priorizar_cortos()
+        lista2 = []
+        lista_tuplas2 = []
+        for i , enumerable in enumerate(cortos):
+            lista2.append(cortos[i][0])
+            lista_tuplas2.append(cortos[i][1][0])
 
-        
-        print(lista)
-        print(lista_tuplas)
-        
-            
+
         lista_tuplas3 = set()
-        for i , j in zip(lista, lista_tuplas):
+        #con este for lo podemos jugar para cada numero 
+        for i , j in zip(lista2, lista_tuplas2):
             print("ENTRA")
             
             print(i,j)
@@ -336,6 +326,8 @@ class NumberLinkGame:
         print("mapa resuelto")    
         [print(" ".join(map(str, fila))) for fila in self.board]
         print(self.caminos)
+        
+        
         return True
         
         #siclo que me llame la función resolver numero para cada una de estas 
@@ -398,6 +390,71 @@ class NumberLinkGame:
     def obtener_direcciones(self):
         return [(0,1),(0,-1),(1,0),(-1,0)]
     
+
+    """
+    funcion encontrar_pares
+    esta funcion sirve para saber en que coordenas se encuentra un numero
+    lo hace con un diccionario llamado "pares" que tiene como llave el numero y como valor una lista de tuplas
+    un ejemplo se tiene el siguiente tablero:
+    1 2 0
+    0 1 2
+    despues de ejecutar la funcion se obtiene el siguiente diccionario:
+    {1:[(0,0),(1,1)], 2:[(1,2),(2,1)]}
+    Esto significa que el número 1 se encuentra en las coordenadas (0, 0) y (1, 1), y el número 2 en las coordenadas (0, 1) y (1, 2).
+    Esto nos servira en otras funciones como la que determina la distancia entre dos numeros
+    """
+    def encontrar_pares(self):
+        pares ={} 
+        for i, fila in enumerate(self.board):
+            for j, numero in enumerate(fila):
+                if numero != 0: # Si el valor no es 0, es decir no es espacio vacio
+                    if numero in pares: # Si el valor no está aun en el diccionario de pares
+                        pares[numero].append((i,j)) # Inicializar la entrada en el diccionario con la primera coordenada
+                    else:
+                        pares[numero] = [(i,j)]  # Agregar la segunda coordenada al valor existente en el diccionario
+        return pares
+    """
+    funncion distancia
+    esta funcion usa algo llamado distancia de manhattan que me recomendo trasla para determinar cual es las distancia entre dos numeros
+    lo bueno de esta distancia es que no toma en cuenta las diagonales
+    esta funcion se rige por una formula matematica que es la siguiente:   abs(x1 - x2) + abs(y1 - y2)
+    esta funcion recibe dos tuplas que representan las coordenadas de dos numeros
+    esta funcion retorna un numero ya sea entero o float que representa la distancia entre los dos puntos (numeros)
+    esta funcion se usara en las funciones de ordenar los pares de numeros
+    Por ejemplo, si punto1 es (2, 3) y punto2 es (5, 1), 
+    la función calcularía la distancia como abs(2 - 5) + abs(3 - 1), que daría como resultado 3 + 2 = 5.
+    
+    """
+    def distancia(self, punto1, punto2):
+        return abs(punto1[0] - punto2[0]) + abs(punto1[1] - punto2[1])
+
+    """
+    funcion priorizar_cortos
+    esta funcion llama a la funcion encontrar_pares , le saca la distancia llamando la funcion distancia 
+    y ordena la lista de tuplas de menor a mayor
+    esta funcion retorna una el lista de tupla menor a mayor distancia que tiene el numero y como segundo valor las cordenadas 
+    esta funcion nos servira para implementar la heuristica mas simple que prioriza conectar los caminos mas cortos
+    """
+    def priorizar_cortos(self):
+        pares = self.encontrar_pares()
+        pares_ordenados = [(numero, (coord1, coord2)) for numero, (coord1, coord2) in sorted(pares.items(), key=lambda par: self.distancia(par[1][0], par[1][1]))]
+        #pares_ordenados = sorted(pares.items(), key=lambda par: self.distancia(par[1][0], par[1][1]))
+        return pares_ordenados 
+
+    """
+    funcion priorizar_largos
+    esta funcion llama a la funcion encontrar_pares , le saca la distancia llamando la funcion distancia
+    y ordena la lista de tuplas de mayor a menor
+    esta funcion retorna una el lista de tupla ordenada de mayor a menor distancia que tiene el numero y como segundo valor las cordenadas 
+    esta funcion nos servira en caso de que intetemos usar le heuristica mas avanzada que recomendo trasla
+    """
+    def priorizar_largos(self):
+        pares = self.encontrar_pares()  # Llama a la función que encuentra los pares y los guarda en 'pares'.
+        pares_ordenados = [(numero, (coord1, coord2)) for numero, (coord1, coord2) in sorted(pares.items(), key=lambda par: self.distancia(par[1][0], par[1][1]), reverse=True)]
+        #pares_ordenados = sorted(pares.items(), key=lambda par: self.distancia(par[1][0], par[1][1]), reverse=True)
+        return pares_ordenados  # Devuelve la lista de pares ordenados por la distancia más larga primero.
+
+
 ####################################################################
 #pruebas de auxiliares de backtracking
 # Asumiendo que tenemos definida la clase NumberLinkGame con todas las funciones mencionadas.
@@ -461,7 +518,15 @@ class TestNumberLinkGame(unittest.TestCase):
         self.assertIsNone(self.game.obtenerSiguienteNumero())  # Todos los números están conectados
 
     def test_resolver_tablero(self):
-        self.game.board = [[1, 0, 0 ,0,0], [5, 0, 5, 0,0] , [0, 1, 0, 0,0], [0, 0, 0, 0, 0],[0, 0, 0, 0, 0]]
+        self.game.board = [
+            [1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 4, 0, 0, 0, 0],
+            [0, 2, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 2, 0, 0],
+            [5, 0, 5, 0, 0, 4, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1]
+        ]
         # Configura un tablero que necesita resolver
         self.assertTrue(self.game.resolver_tablero())#toca cambiar esto
         # Verifica que el tablero se resuelve correctamente
