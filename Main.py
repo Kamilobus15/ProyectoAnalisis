@@ -461,7 +461,7 @@ class NumberLinkGame:
             self.pfrofundidad -= 1
             return False
         
-        self.resolver_numero( inicio, numero, visitados_anterior, tablero_anterior)    
+        #self.resolver_numero( inicio, numero, visitados_anterior, tablero_anterior)    
         print(f"No se encontró solución desde {inicio}, visitados: {visitados}")
         self.profundidad -= 1
         return movimiento_exitoso
