@@ -20,34 +20,45 @@ class NumberLinkGame:
                 btn.bind("<Button-1>", lambda event, x=i, y=j: self.on_click(x, y))
                 btn.bind("<Button-3>", lambda event, x=i, y=j: self.undo(x, y))
                 self.buttons[i][j] = btn
+    
+    
+    
+    def is_valid_move(self, selected, new_position):
+        selected_x, selected_y = selected
+        new_x, new_y = new_position
+        # Check if the move is horizontal or vertical by one square only
+        return (selected_x == new_x and abs(selected_y - new_y) == 1) or \
+               (selected_y == new_y and abs(selected_x - new_x) == 1)
 
     def on_click(self, x, y):
+        # Si hay un cuadrado seleccionado y el nuevo clic es un cuadrado vacío
         if self.board[x][y] == 0 and self.selected:
-            # Mark path
-            self.path.append((x, y))
-            self.buttons[x][y].config(bg="gray")
+            # Última posición seleccionada en el camino actual
+            last_x, last_y = self.path[-1] if self.path else self.selected
+            if self.is_valid_move((last_x, last_y), (x, y)):
+                self.path.append((x, y))
+                self.buttons[x][y].config(bg="gray")
+        # Si el nuevo clic es en un cuadrado con número y no hay nada seleccionado
         elif self.board[x][y] != 0:
             if not self.selected:
+                # Inicio de un nuevo camino
                 self.selected = (x, y)
                 self.path = [(x, y)]
                 self.buttons[x][y].config(bg="green")
             else:
-                # Check if it's the matching number
+                # Intento de completar un camino
                 if self.board[x][y] == self.board[self.selected[0]][self.selected[1]] and (x, y) != self.selected:
-                    self.path.append((x, y))
-                    for px, py in self.path:
-                        self.board[px][py] = self.board[self.selected[0]][self.selected[1]]
-                        self.buttons[px][py].config(bg="yellow", text=self.board[px][py])
-                    self.selected = None
-                    self.path = []
-                    self.check_game_completion()
-                else:
-                    # Reset path
-                    for px, py in self.path:
-                        self.buttons[px][py].config(bg="white")
-                    self.selected = (x, y)
-                    self.path = [(x, y)]
-                    self.buttons[x][y].config(bg="green")
+                    last_x, last_y = self.path[-1]
+                    if self.is_valid_move((last_x, last_y), (x, y)):
+                        # Final del camino
+                        self.path.append((x, y))
+                        for px, py in self.path:
+                            self.board[px][py] = self.board[self.selected[0]][self.selected[1]]
+                            self.buttons[px][py].config(bg="yellow", text=self.board[px][py])
+                        self.selected = None
+                        self.path = []
+                        self.check_game_completion()
+        # Si el movimiento no es válido,
 
     def undo(self, x, y):
         # If the undone cell is part of an existing path (not the current path), clear the entire path but preserve start and end numbers
