@@ -435,7 +435,7 @@ class NumberLinkGame:
                         else:
                             self.historial_tableros[-1] = (self.historial_tableros[-1][0], True, copy.deepcopy(visitados))
                     #aca deberia ir una condicion de salida?
-            return movimiento_exitoso          
+
 
                         
 
@@ -454,6 +454,9 @@ class NumberLinkGame:
         if self.indice is not None:
             tablero_anterior, _,visitados_anterior= self.historial_tableros[self.indice]
             self.imprimir_tablero()
+            if not self.resolver_numero(inicio, numero, visitados_anterior, tablero_anterior):
+                self.profundidad -= 1
+                movimiento_exitoso = False
         else:
             self.pfrofundidad -= 1
             return False
@@ -461,7 +464,7 @@ class NumberLinkGame:
         self.resolver_numero( inicio, numero, visitados_anterior, tablero_anterior)    
         print(f"No se encontró solución desde {inicio}, visitados: {visitados}")
         self.profundidad -= 1
-        return False
+        return movimiento_exitoso
 
     """def estado_ya_visitado(self, actual):
         #return any(estado == actual for estado in self.historial_tableros )
@@ -596,6 +599,7 @@ class TestNumberLinkGame(unittest.TestCase):
         self.game.board = [[1, 0, 0 ,0,0], [0, 0, 0, 0,0] , [0, 0, 0, 0,0], [0, 0, 0, 0,0],[0, 0, 0, 0,1]]
         self.assertTrue(self.game.resolver_numero((0, 0), 1, set(),self.game.board))
 """
+    """    
     def test_resolver_tablero(self):
         self.game.board = [
             [1, 0, 0, 0, 0, 0, 0],
@@ -608,7 +612,8 @@ class TestNumberLinkGame(unittest.TestCase):
         ]
         self.assertTrue(self.game.resolver_tablero())
 
-        """"
+    """
+
     def test_resolver_tablero(self):
         self.game.board = [
             [0, 0, 0, 4, 0, 0, 0],
@@ -620,7 +625,7 @@ class TestNumberLinkGame(unittest.TestCase):
             [2, 0, 0, 0, 4, 0, 0]
         ]
         self.assertTrue(self.game.resolver_tablero())
-        """
+
     def test_resolver_numero(self):
         self.game.board = [[1, 0, 0 ,0,0], [0, 0, 0, 0,0] , [0, 0, 0, 0,0], [0, 0, 0, 0,0],[0, 0, 0, 0,1]]
         self.assertTrue(self.game.resolver_numero((0, 0), 1, set(), self.game.board))
