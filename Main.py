@@ -599,7 +599,6 @@ class TestNumberLinkGame(unittest.TestCase):
         self.game.board = [[1, 0, 0 ,0,0], [0, 0, 0, 0,0] , [0, 0, 0, 0,0], [0, 0, 0, 0,0],[0, 0, 0, 0,1]]
         self.assertTrue(self.game.resolver_numero((0, 0), 1, set(),self.game.board))
 """
-    """    
     def test_resolver_tablero(self):
         self.game.board = [
             [1, 0, 0, 0, 0, 0, 0],
@@ -612,8 +611,8 @@ class TestNumberLinkGame(unittest.TestCase):
         ]
         self.assertTrue(self.game.resolver_tablero())
 
+    
     """
-
     def test_resolver_tablero(self):
         self.game.board = [
             [0, 0, 0, 4, 0, 0, 0],
@@ -625,7 +624,7 @@ class TestNumberLinkGame(unittest.TestCase):
             [2, 0, 0, 0, 4, 0, 0]
         ]
         self.assertTrue(self.game.resolver_tablero())
-
+    """
     def test_resolver_numero(self):
         self.game.board = [[1, 0, 0 ,0,0], [0, 0, 0, 0,0] , [0, 0, 0, 0,0], [0, 0, 0, 0,0],[0, 0, 0, 0,1]]
         self.assertTrue(self.game.resolver_numero((0, 0), 1, set(), self.game.board))
