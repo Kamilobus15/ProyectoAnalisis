@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 import unittest
+import copy
 
 
 # Clase principal del juego
@@ -14,6 +15,8 @@ class NumberLinkGame:
         self.path = [] # Camino actual entre dos números
         self.caminos = set()
         self.size = len(board)
+        self.profundidad = 0
+        self.maxRecursion = 1000
 
         # Mostrar el tablero en la interfaz
         self.buttons = [[None for _ in row] for row in board]
@@ -296,22 +299,25 @@ class NumberLinkGame:
     #### heuristicas ####
 
     ### mal
+    historial_tableros = []
     instacia_tablero = [[]]
     #tupla de visitados        
     l_tupla = set()
+    indice=None # se deberia reiniciar dentro de resolver_tablero
+    #recursion = 1000
     
     def resolver_tablero(self):
         
           
-        cortos = self.priorizar_cortos()
-        lista2 = []
-        lista_tuplas2 = []
+        cortos = self.priorizar_largos() #lista de tuplas (numero, (coordenadas))
+        lista2 = [] #numeros
+        lista_tuplas2 = [] #coordenadas
         for i , enumerable in enumerate(cortos):
             lista2.append(cortos[i][0])
             lista_tuplas2.append(cortos[i][1][0])
 
 
-        lista_tuplas3 = set()
+        lista_tuplas3 = set() #tuplas coordenadas de visitados
         #con este for lo podemos jugar para cada numero 
         for i , j in zip(lista2, lista_tuplas2):
             print("ENTRA")
@@ -319,17 +325,23 @@ class NumberLinkGame:
             print(i,j)
             #función que guarde la instancia del tablero 
             
-            global instacia_tablero 
-            global l_tupla
+            global instacia_tablero #instancia inicial del tablero
+            #global l_tupla #tupla de visitados 
             instacia_tablero = [[]]
             
             
-            l_tupla = set()
+            #l_tupla = set()
             instacia_tablero = self.board
-            self.resolver_numero(j, i,set(), self.board)
+            #posible if que si devuelve falso se devuelva a la instancia anterior del tablero 
+            # en esta logica hay que tener en cuenta los visitados para que no se quede en bucle infinito
+
+            visitados = set()
+            self.indice = None
+            if not self.resolver_numero(j, i,visitados, self.board):
+                return False
             
             lista_tuplas3 = self.caminos | lista_tuplas3
-            l_tupla = lista_tuplas3
+            visitados= lista_tuplas3
 
         self.caminos= lista_tuplas3    
             
@@ -351,14 +363,27 @@ class NumberLinkGame:
     
     ### mal
     def resolver_numero(self, inicio, numero, visitados, boards):
+        self.profundidad += 1
+        if self.profundidad > self.maxRecursion:
+            self.profundidad -= 1
+            return False
+        
+        movimiento_exitoso = False
+
         validar = False
         print("entramos en esta función")
         #se entra a camino solo cuando se conecta , esto me gusta 
         self.caminos = visitados
         if visitados is None:
             visitados = set()
+        if self.estado_ya_visitado(boards):
+            self.profundidad -= 1
+            return False
         if self.esNumeroConectado(numero):
+            self.historial_tableros.append((copy.deepcopy(self.board), False, copy.deepcopy(visitados)))
+            self.indice = len(self.historial_tableros)-1
             print("----------------hola---------------")
+            self.profundidad -= 1
             return True
 
         
@@ -367,7 +392,8 @@ class NumberLinkGame:
             x,y = inicio
             visitados.add((x,y))
             print(f"Iniciando desde {inicio}") 
-
+            #aca deberia ir una condicion de salida?
+            #o quitar el else
 
             #estos dos son los for que hacen el movimento desde el punto inicio 
             
@@ -375,26 +401,41 @@ class NumberLinkGame:
             for dx, dy in [(x,(y+1)),((x+1),y),(x, (y-1)),((x-1),y)]:
                 if (dx, dy) not in visitados and self.movimientoValido(dx, dy, numero):
                     if self.board[dx][dy] == numero :
-                            visitados.add((dx,dy))
-                            print(self.caminos)
-                            validar1 = True
-                            print("CONECTADO")
-                            return True
+                        visitados.add((dx,dy))
+                        print(self.caminos)
+                        validar1 = True
+                        print("CONECTADO")
+                        #self.historial_tableros.append(copy.deepcopy(self.board))
+                        movimiento_exitoso = True
+                        self.profundidad -= 1
+                        break
+                        #return True
+                    #aca deberia ir una condicion de salida?
 
-            #for para hacer movimiento, este es complejo      
-            for dx, dy in [(x,(y+1)),((x+1),y),(x, (y-1)),((x-1),y)]:
-                if ((dx, dy) not in visitados and self.movimientoValido(dx, dy, numero) and validar1 == False):
-                    
-                    if ( (self.esNumeroConectado(numero) == False)):
-                        self.hacerMovimiento(dx, dy, numero)
-                        print(f"Movimiento realizado a {(dx, dy)}")
-                        self.resolver_numero( (dx,dy), numero, visitados, self.board)
-                        #[print(" ".join(map(str, fila))) for fila in self.board]
+            #for para hacer movimiento, este es complejo  
+            if not movimiento_exitoso:    
+                for dx, dy in [(x,(y+1)),((x+1),y),(x, (y-1)),((x-1),y)]:
+                    if ((dx, dy) not in visitados and self.movimientoValido(dx, dy, numero) and validar1 == False):
                         
-                        
-                    
-                      
-                    
+                        if ( (self.esNumeroConectado(numero) == False)):
+                            self.historial_tableros.append((copy.deepcopy(self.board), False, copy.deepcopy(visitados)))
+                            self.indice = len(self.historial_tableros)-1
+                            self.hacerMovimiento(dx, dy, numero)
+                            print(f"Movimiento realizado a {(dx, dy)}")
+                            self.imprimir_tablero()
+                            if self.resolver_numero( (dx,dy), numero, visitados, self.board):
+                                self.profundidad -= 1
+                                movimiento_exitoso = True
+                                break
+                                #return True
+                            #[print(" ".join(map(str, fila))) for fila in self.board]
+                            
+                            #en algun punto de por aca se determina que ya no hay solución y se  deberia devolver a la instancia anterior del tablero
+                        #aca deberia ir una condicion de salida?
+                        else:
+                            self.historial_tableros[-1] = (self.historial_tableros[-1][0], True, copy.deepcopy(visitados))
+                    #aca deberia ir una condicion de salida?
+            return movimiento_exitoso          
 
                         
 
@@ -409,11 +450,37 @@ class NumberLinkGame:
         print(self.caminos)
         [print(" ".join(map(str, fila))) for fila in instacia_tablero]"""
         print("AAAAAAAAAAAAA")
+
+        if self.indice is not None:
+            tablero_anterior, _,visitados_anterior= self.historial_tableros[self.indice]
+            self.imprimir_tablero()
+        else:
+            self.pfrofundidad -= 1
+            return False
         
-        self.resolver_numero( inicio, numero, l_tupla, instacia_tablero)    
+        self.resolver_numero( inicio, numero, visitados_anterior, tablero_anterior)    
         print(f"No se encontró solución desde {inicio}, visitados: {visitados}")
+        self.profundidad -= 1
         return False
 
+    """def estado_ya_visitado(self, actual):
+        #return any(estado == actual for estado in self.historial_tableros )
+        for estado, es_callejon in self.historial_tableros:
+            if estado == actual and es_callejon:
+                return True
+        return False"""
+    def estado_ya_visitado(self, actual):
+        #return any(estado == actual for estado in self.historial_tableros )
+        for estado, es_callejon, _ in self.historial_tableros:  # Agrega un tercer lugar para desempacar visitados
+            if estado == actual and es_callejon:
+                return True
+        return False
+        
+    def imprimir_tablero(self):
+        print("Estado actual del tablero:")
+        for fila in self.board:
+            print(" ".join(str(celda) for celda in fila))
+        print()  # Línea en blanco para separar las impresiones
 
     def obtener_direcciones(self):
         return [(0,1),(0,-1),(1,0),(-1,0)]
@@ -511,7 +578,7 @@ class TestNumberLinkGame(unittest.TestCase):
         self.game.caminos = {(0, 0), (0, 1), (1, 0), (1, 1)}  # Caminos para 1 y 2
         self.assertIsNone(self.game.obtenerSiguienteNumero())  # Todos los números están conectados
 
-    def test_resolver_tablero(self):
+    """"def test_resolver_tablero(self):
         self.game.board = [
             [1, 0, 0, 0, 0, 0, 0],
             [0, 0, 4, 0, 0, 0, 0],
@@ -528,6 +595,40 @@ class TestNumberLinkGame(unittest.TestCase):
     def test_resolver_numero(self):
         self.game.board = [[1, 0, 0 ,0,0], [0, 0, 0, 0,0] , [0, 0, 0, 0,0], [0, 0, 0, 0,0],[0, 0, 0, 0,1]]
         self.assertTrue(self.game.resolver_numero((0, 0), 1, set(),self.game.board))
+"""
+    def test_resolver_tablero(self):
+        self.game.board = [
+            [1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 4, 0, 0, 0, 0],
+            [0, 2, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 2, 0, 0],
+            [5, 0, 5, 0, 0, 4, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1]
+        ]
+        self.assertTrue(self.game.resolver_tablero())
+
+        """"
+    def test_resolver_tablero(self):
+        self.game.board = [
+            [0, 0, 0, 4, 0, 0, 0],
+            [0, 3, 0, 0, 2, 5, 0],
+            [0, 0, 0, 3, 1, 0, 0],
+            [0, 0, 0, 5, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0],
+            [2, 0, 0, 0, 4, 0, 0]
+        ]
+        self.assertTrue(self.game.resolver_tablero())
+        """
+    def test_resolver_numero(self):
+        self.game.board = [[1, 0, 0 ,0,0], [0, 0, 0, 0,0] , [0, 0, 0, 0,0], [0, 0, 0, 0,0],[0, 0, 0, 0,1]]
+        self.assertTrue(self.game.resolver_numero((0, 0), 1, set(), self.game.board))
+
+    """def test_estado_ya_visitado(self):
+        # Test para estado_ya_visitado con datos ficticios
+        self.game.historial_tableros.append((copy.deepcopy(self.game.board), True, set([(0, 0)])))
+        self.assertTrue(self.game.estado_ya_visitado(self.game.board))"""
 
     def test_obtener_direcciones(self):
         esperado = [(0, 1), (0, -1), (1, 0), (-1, 0)]
