@@ -263,6 +263,18 @@ class NumberLinkGame:
             return False
         # Si todas las comprobaciones pasan, el movimiento es válido.
         return True
+    
+
+    def movimientoValido2(self, x, y, numero, visitados=None, caminos=None):
+        # Verifica si la posición está dentro de los límites del tablero.
+        if not (0 <= x < len(self.board) and 0 <= y < len(self.board)):
+            return False
+        # Verifica si la celda está ocupada por un número diferente.
+        if self.board[x][y] not in (0, numero):
+            return False
+        
+        # Si todas las comprobaciones pasan, el movimiento es válido.
+        return True
 
     
     def hacerMovimiento(self, x,y, numero):
@@ -298,7 +310,8 @@ class NumberLinkGame:
     ### mal
     instacia_tablero = [[]]
     #tupla de visitados        
-    l_tupla = set()
+    l_tupla = ()
+    punto0 = (0,0)
     
     def resolver_tablero(self):
         
@@ -313,33 +326,42 @@ class NumberLinkGame:
 
         lista_tuplas3 = set()
         #con este for lo podemos jugar para cada numero 
+        global instacia_tablero 
+        instacia_tablero = self.board  
+        global l_tupla  
+        l_tupla = self.caminos 
+        global punto0
+        print("XXXXXXXXXXXXXXXXXXXXX")
+        [print(" ".join(map(str, fila))) for fila in instacia_tablero]
         for i , j in zip(lista2, lista_tuplas2):
             print("ENTRA")
             
             print(i,j)
             #función que guarde la instancia del tablero 
             
-            global instacia_tablero 
-            global l_tupla
-            instacia_tablero = [[]]
             
-            
-            l_tupla = set()
-            instacia_tablero = self.board
-            self.resolver_numero(j, i,set(), self.board)
-            
-            lista_tuplas3 = self.caminos | lista_tuplas3
-            l_tupla = lista_tuplas3
+            punto0 = j
+            if (self.resolver_numero(j, i,set(), self.board) == True):                
+                self.board = instacia_tablero
+                lista_tuplas3 = self.caminos | lista_tuplas3
+                self.caminos= lista_tuplas3   
+                
+            else:
+                print("este es el else")
+                [print(" ".join(map(str, fila))) for fila in instacia_tablero]
 
-        self.caminos= lista_tuplas3    
+            
+
+         
             
 
             
             
             
         print("mapa resuelto")    
-        [print(" ".join(map(str, fila))) for fila in self.board]
+        [print(" ".join(map(str, fila))) for fila in instacia_tablero]
         print(self.caminos)
+        print("----------------")
         
         
         return True
@@ -353,20 +375,26 @@ class NumberLinkGame:
     def resolver_numero(self, inicio, numero, visitados, boards):
         validar = False
         print("entramos en esta función")
+        
         #se entra a camino solo cuando se conecta , esto me gusta 
         self.caminos = visitados
         if visitados is None:
             visitados = set()
+            print("entramos a opción 1")
         if self.esNumeroConectado(numero):
             print("----------------hola---------------")
+            print("entramos a opción 2")
             return True
 
         
         else:
+            print("entramos a opción 3")
             validar1 = False
+            validad2 = False
             x,y = inicio
             visitados.add((x,y))
             print(f"Iniciando desde {inicio}") 
+            
 
 
             #estos dos son los for que hacen el movimento desde el punto inicio 
@@ -374,43 +402,88 @@ class NumberLinkGame:
             #for que ve que no lo tenga de vecino  este for actua hasta llegar a la solución o un punto encerrado
             for dx, dy in [(x,(y+1)),((x+1),y),(x, (y-1)),((x-1),y)]:
                 if (dx, dy) not in visitados and self.movimientoValido(dx, dy, numero):
+                    print("entramos a opción 3,1")
                     if self.board[dx][dy] == numero :
+                            print("entramos a opción 3,1,1")
                             visitados.add((dx,dy))
                             print(self.caminos)
                             validar1 = True
                             print("CONECTADO")
+                            global instacia_tablero
+                            instacia_tablero = self.board
+                            global l_tupla  
+                            l_tupla = self.caminos 
+                            global punto0
+                            punto0 = (dx,dy)
+                            [print(" ".join(map(str, fila))) for fila in instacia_tablero]
+                            print("XXXXXXXXXXXXXXXXXXXXX")
                             return True
+                    else:
+                        print("entramos a opción 3,1,2")
+                else:
+                    print("entramos a opción 3,2")
 
-            #for para hacer movimiento, este es complejo      
+            #for para hacer movimiento, este es complejo    
             for dx, dy in [(x,(y+1)),((x+1),y),(x, (y-1)),((x-1),y)]:
                 if ((dx, dy) not in visitados and self.movimientoValido(dx, dy, numero) and validar1 == False):
-                    
-                    if ( (self.esNumeroConectado(numero) == False)):
+                    print("entramos a opción 4,1")
+                    if ( (self.esNumeroConectado(numero) == False) and self.movimientoValido(dx, dy, numero)):
+                        validad2 = True
                         self.hacerMovimiento(dx, dy, numero)
+                        print(x,y)
                         print(f"Movimiento realizado a {(dx, dy)}")
+                        
                         self.resolver_numero( (dx,dy), numero, visitados, self.board)
                         #[print(" ".join(map(str, fila))) for fila in self.board]
+                        print("entramos a opción 4,1,1")
+                    else:
+                        print("entramos a opción 4,1,2")
+                """elif((dx, dy) not in visitados and self.movimientoValido2(dx, dy, numero) and validar1 == False):
+                    print("entramos a opción 4,2")
+                    if ( (self.esNumeroConectado(numero) == False) and self.movimientoValido(dx, dy, numero)):
+                        self.resolver_numero(punto0 ,numero , l_tupla ,instacia_tablero)  
+                        validad2 = True
+                        self.hacerMovimiento(dx, dy, numero)
+                        print(x,y)
+                        print(f"Movimiento realizado a {(dx, dy)}")
                         
+                        self.resolver_numero( (dx,dy), numero, visitados, self.board)
+                        #[print(" ".join(map(str, fila))) for fila in self.board]
+                        print("entramos a opción 4,2,1")
+                    elif((self.esNumeroConectado(numero) == False) ):
+                        validad2 = True
+                        self.hacerMovimiento(dx, dy, numero)
+                        print(x,y)
+                        print(f"Movimiento realizado a {(dx, dy)}")
                         
-                    
-                      
-                    
+                        self.resolver_numero( (dx,dy), numero, visitados, self.board)
+                       #[print(" ".join(map(str, fila))) for fila in self.board]
+                        print("entramos a opción 4,2,2")
+                        self.resolver_numero(punto0 ,numero , l_tupla ,instacia_tablero)  
+                    else:
+                        
+                        print("entramos a opción 4,2,3")
+                else:
+                    print("entramos a opción 4,3")    """
 
-                        
-
-            [print(" ".join(map(str, fila))) for fila in self.board]
-            print()
-            #idea para quitar camino
-            
-        """print("YYYYYYYYYYYYY")
-        print(l_tupla)
-        print(type(l_tupla))
-        print("AAAAAAAAAAAAA")
-        print(self.caminos)
-        [print(" ".join(map(str, fila))) for fila in instacia_tablero]"""
-        print("AAAAAAAAAAAAA")
         
-        self.resolver_numero( inicio, numero, l_tupla, instacia_tablero)    
+        if validad2 == False:
+            print("AAAAAAAAAAAAA")
+            
+            print("este es el else")
+            print(punto0)
+            print(numero)
+            #el problema esta en el valor visitados 
+            #ya esta no mover l_tupla 
+            print(l_tupla)
+            print(type(l_tupla))
+            print(visitados)
+            print(type(visitados))
+            print(self.caminos)
+            print(type(self.caminos))
+            [print(" ".join(map(str, fila))) for fila in instacia_tablero]
+            #self.resolver_numero(punto0 ,numero , l_tupla ,instacia_tablero)   
+        
         print(f"No se encontró solución desde {inicio}, visitados: {visitados}")
         return False
 
